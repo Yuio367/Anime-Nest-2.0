@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Nest</title>
+</head>
+<body>
+    <h1>Welcome to Anime Nest</h1>
+    <input type="text" id="searchBox" placeholder="Search for anime...">
+    <button onclick="searchAnime()">Search</button>
+    <div id="results"></div>
+
+    <script>
+        function searchAnime() {
+            let query = document.getElementById("searchBox").value;
+            let url = `https://api.consumet.org/anime/gogoanime/${query}`;
+
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let resultsDiv = document.getElementById("results");
+                resultsDiv.innerHTML = "";  // Clear previous results
+
+                data.results.forEach(anime => {
+                    let animeCard = document.createElement("div");
+                    animeCard.innerHTML = `
+                        <img src="${anime.image}" alt="${anime.title}" width="150">
+                        <h3>${anime.title}</h3>
+                        <a href="${anime.url}" target="_blank">Watch Now</a>
+                    `;
+                    resultsDiv.appendChild(animeCard);
+                });
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+      </html>
