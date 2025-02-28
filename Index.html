@@ -4,36 +4,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anime Nest</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #0d0d0d;
+            color: white;
+        }
+        #search-box {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+        }
+        .anime-card {
+            background-color: #1a1a1a;
+            margin: 10px;
+            padding: 15px;
+            display: inline-block;
+            border-radius: 10px;
+            width: 200px;
+            text-align: center;
+        }
+        img {
+            width: 100%;
+            border-radius: 10px;
+        }
+        a {
+            color: cyan;
+            text-decoration: none;
+        }
+        video {
+            width: 80%;
+            height: auto;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Anime Nest</h1>
-    <input type="text" id="searchBox" placeholder="Search for anime...">
+
+    <h1>Anime Nest</h1>
+
+    <input type="text" id="search-box" placeholder="Search for an anime...">
     <button onclick="searchAnime()">Search</button>
-    <div id="results"></div>
+
+    <div id="anime-list"></div>
+
+    <div id="anime-details" style="display:none;">
+        <h2 id="anime-title"></h2>
+        <img id="anime-image" src="" alt="">
+        <p id="anime-description"></p>
+        <h3>Episodes</h3>
+        <div id="episode-list"></div>
+    </div>
+
+    <div id="watch-section" style="display:none;">
+        <h2>Now Watching</h2>
+        <video id="anime-player" controls></video>
+    </div>
 
     <script>
         function searchAnime() {
-            let query = document.getElementById("searchBox").value;
+            let query = document.getElementById("search-box").value;
             let url = `https://api.consumet.org/anime/gogoanime/${query}`;
-
+            
             fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                let resultsDiv = document.getElementById("results");
-                resultsDiv.innerHTML = "";  // Clear previous results
+                .then(response => response.json())
+                .then(data => {
+                    let animeList = document.getElementById("anime-list");
+                    animeList.innerHTML = "";
 
-                data.results.forEach(anime => {
-                    let animeCard = document.createElement("div");
-                    animeCard.innerHTML = `
-                        <img src="${anime.image}" alt="${anime.title}" width="150">
-                        <h3>${anime.title}</h3>
-                        <a href="${anime.url}" target="_blank">Watch Now</a>
-                    `;
-                    resultsDiv.appendChild(animeCard);
-                });
-            })
-            .catch(error => console.error("Error:", error));
+                    if (data.results) {
+                        data.results.forEach(anime => {
+                            let animeCard = document.createElement("div");
+                            animeCard.classList.add("anime-card");
+
+                            animeCard.innerHTML = `
+                                <img src="${anime.image}" alt="${anime.title}">
+                                <h3>${anime.title}</h3>
+                                <button onclick="showAnime('${anime.id}')">Watch Now</button>
+                            `;
+
+                            animeList.appendChild(animeCard);
+                        });
+                    } else {
+                        animeList.innerHTML = "<h3>Anime not found</h3>";
+                    }
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+
+        function showAnime(animeId) {
+            fetch(`https://api.consumet.org/anime/gogoanime/info/${animeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("anime-title").innerText = data.title;
+                    document.getElementById("anime-image").src = data.image;
+                    document.getElementById("anime-description").innerText = data.description;
+                    
+                    let episodeList = document.getElementById("episode-list");
+                    episodeList.innerHTML = "";
+
+                    data.episodes.forEach(episode => {
+                        let episodeButton = document.createElement("button");
+                        episodeButton.innerText = `Episode ${episode.number}`;
+                        episodeButton.onclick = function() { watchEpisode(episode.id); };
+                        episodeList.appendChild(episodeButton);
+                    });
+
+                    document.getElementById("anime-details").style.display = "block";
+                    document.getElementById("watch-section").style.display = "none";
+                })
+                .catch(error => console.error("Error fetching anime details:", error));
+        }
+
+        function watchEpisode(episodeId) {
+            fetch(`https://api.consumet.org/anime/gogoanime/watch/${episodeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    let videoPlayer = document.getElementById("anime-player");
+                    videoPlayer.src = data.sources[0].url;
+
+                    document.getElementById("anime-details").style.display = "none";
+                    document.getElementById("watch-section").style.display = "block";
+                })
+                .catch(error => console.error("Error fetching episode:", error));
         }
     </script>
+
 </body>
-      </html>
+</html>
